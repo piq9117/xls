@@ -9,15 +9,12 @@
 --
 -- Parse Microsoft excel spreadsheet xls file (format BIFF/Excel 97-2004).
 --
-{-# OPTIONS_GHC -pgmP gcc -optP -E -optP -undef -optP -std=c89 #-}
+-- {-# OPTIONS_GHC -pgmP gcc -optP -E -optP -undef -optP -std=c89 #-}
 
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE RankNTypes #-}
-#if __GLASGOW_HASKELL__ < 7100
-{-# LANGUAGE DeriveDataTypeable #-}
-#endif
+
 
 module Data.Xls
     ( decodeXlsIO
@@ -38,42 +35,38 @@ import           Foreign.C
 import           Foreign.Ptr
 import           Text.Printf
 
-#define CCALL(name,signature) \
-foreign import ccall unsafe #name \
-    c_##name :: signature
-
 -- Workbook accessor functions
 data XLSWorkbookStruct
 type XLSWorkbook = Ptr XLSWorkbookStruct
 
-CCALL(xls_open,          CString -> CString -> IO XLSWorkbook)
-CCALL(xls_wb_sheetcount, XLSWorkbook -> IO CInt -- Int32)
-CCALL(xls_close_WB,      XLSWorkbook -> IO ())
+foreign import ccall unsafe "xls_open"   c_xls_open ::           CString -> CString -> IO XLSWorkbook
+foreign import ccall unsafe "xls_wb_sheetcount"   c_xls_wb_sheetcount ::  XLSWorkbook -> IO CInt -- Int32
+foreign import ccall unsafe "xls_close_WB"   c_xls_close_WB ::       XLSWorkbook -> IO ()
 
 -- Worksheet accessor functions
 data XLSWorksheetStruct
 type XLSWorksheet = Ptr XLSWorksheetStruct
 
-CCALL(xls_getWorkSheet, XLSWorkbook -> CInt -> IO XLSWorksheet)
+foreign import ccall unsafe "xls_getWorkSheet"   c_xls_getWorkSheet ::  XLSWorkbook -> CInt -> IO XLSWorksheet
 
-CCALL(xls_parseWorkSheet, XLSWorksheet -> IO ())
-CCALL(xls_ws_rowcount,    XLSWorksheet -> IO Int16 -- Int16)
-CCALL(xls_ws_colcount,    XLSWorksheet -> IO Int16 -- Int16)
-CCALL(xls_close_WS,       XLSWorksheet -> IO ())
+foreign import ccall unsafe "xls_parseWorkSheet"   c_xls_parseWorkSheet ::  XLSWorksheet -> IO ()
+foreign import ccall unsafe "xls_ws_rowcount"   c_xls_ws_rowcount ::     XLSWorksheet -> IO Int16 -- Int16
+foreign import ccall unsafe "xls_ws_colcount"   c_xls_ws_colcount ::     XLSWorksheet -> IO Int16 -- Int16
+foreign import ccall unsafe "xls_close_WS"   c_xls_close_WS ::        XLSWorksheet -> IO ()
 
 -- Cell accessor functions
 data XLSCellStruct
 type XLSCell = Ptr XLSCellStruct
 
-CCALL(xls_cell, XLSWorksheet -> Int16 -> Int16 -> IO XLSCell)
+foreign import ccall unsafe "xls_cell"   c_xls_cell ::  XLSWorksheet -> Int16 -> Int16 -> IO XLSCell
 
-CCALL(xls_cell_type,            XLSCell -> IO Int16 -- Int16)
-CCALL(xls_cell_strval,          XLSCell -> IO CString)
-CCALL(xls_cell_formulatype,     XLSCell -> IO Int32 -- Int32)
-CCALL(xls_cell_numval,          XLSCell -> IO CDouble)
--- CCALL(xls_cell_colspan,         XLSCell -> IO Int16 -- Int16)
--- CCALL(xls_cell_rowspan,         XLSCell -> IO Int16 -- Int16)
-CCALL(xls_cell_hidden,          XLSCell -> IO Int8 -- Int8)
+foreign import ccall unsafe "xls_cell_type"   c_xls_cell_type ::             XLSCell -> IO Int16 -- Int16
+foreign import ccall unsafe "xls_cell_strval"   c_xls_cell_strval ::           XLSCell -> IO CString
+foreign import ccall unsafe "xls_cell_formulatype"   c_xls_cell_formulatype ::      XLSCell -> IO Int32 -- Int32
+foreign import ccall unsafe "xls_cell_numval"   c_xls_cell_numval ::           XLSCell -> IO CDouble
+-- foreign import ccall unsafe "xls_cell_colspan"   c_xls_cell_colspan ::          XLSCell -> IO Int16 -- Int16
+-- foreign import ccall unsafe "xls_cell_rowspan"   c_xls_cell_rowspan ::          XLSCell -> IO Int16 -- Int16
+foreign import ccall unsafe "xls_cell_hidden"   c_xls_cell_hidden ::           XLSCell -> IO Int8 -- Int8
 
 data XlsException =
       XlsFileNotFound String
